@@ -19,7 +19,7 @@ extension ModelEntity {
     )
     
     entity.components.set(PhysicsBodyComponent(mode: .kinematic))
-    entity.components.set(OpacityComponent(opacity: 0.0))
+    entity.components.set(OpacityComponent(opacity: 0.0))  // comment out this line to visualize the fingertip tracker
     
     return entity
   }
