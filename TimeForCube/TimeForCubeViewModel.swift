@@ -37,6 +37,16 @@ import RealityKit
       print ("failed to start session: \(error)")
     }
   }
+
+  /*
+  // Function to return the translation distance from a transform; for inspecting the various transforms
+  func distanceTranslationFromTransform(_ transform: simd_float4x4) -> Float {
+      let translation = transform.columns.3
+      let translationVector = SIMD3<Float>(translation.x, translation.y, translation.z)
+      let translationDistance = sqrt( pow(translationVector.x, 2) + pow(translationVector.y, 2) + pow(translationVector.z, 2))
+      return translationDistance
+  }
+  */
   
   func processHandUpdates() async {
     for await update in handTracking.anchorUpdates {
@@ -48,8 +58,34 @@ import RealityKit
       
       guard ((fingerTip?.isTracked) != nil) else { continue }
       
-      let originFromWrist = handAnchor.originFromAnchorTransform
-      let wristFromIndex = fingerTip?.parentFromJointTransform
+      let originFromWrist = handAnchor.originFromAnchorTransform  // location of the 'hand' (wrist) in world space
+
+        // walk the skeleton back to the wrist, printing out names and distances
+        // sequence: 
+        //      .indexFingerTip = tip of finger
+        //      .indexFingerIntermediateTip = DIP joint
+        //      .indexFingerIntermediateBase = PIP joint
+        //      .indexFingerKnuckle = MP joint
+        //      .indexFingerMetacarpal = metacarpal shaft
+        //      .wrist = wrist, which has no parent, and pfj and afj are 0.0
+        //
+        /* // uncomment to see the components of the skeleton and how they relate to each other
+           // (will also have to uncomment the function above)
+        var thisJoint = fingerTip
+        while (thisJoint != nil) {
+            let nextJoint = thisJoint!.parentJoint
+            let jointName = thisJoint!.name
+            let jointDescription = thisJoint!.description // description is really long, & spells out components of transform
+            let pfj = thisJoint!.parentFromJointTransform
+            let afj = thisJoint!.anchorFromJointTransform
+            print("Joint \(jointName) has pfj \(distanceTranslationFromTransform(pfj)) and afj \(distanceTranslationFromTransform(afj))")
+            thisJoint = nextJoint
+        }
+        */
+        
+      // anchorFromJointTransform gives transfrom from base joint of skeleton; parent just gives transform from immediate prior joint
+      
+      let wristFromIndex = fingerTip?.anchorFromJointTransform
       let originFromIndex = originFromWrist * wristFromIndex!
       
       fingerEntities[handAnchor.chirality]?.setTransformMatrix(originFromIndex, relativeTo: nil)
